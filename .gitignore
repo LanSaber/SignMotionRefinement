@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+build/
+dist/
+
+# The migrated artifact archive is retained on disk but is too large for
+# ordinary Git. Use an artifact store or Git LFS if it must be versioned.
+artifacts/experiments/
+artifacts/visualizations/
+
+# Licensed external model assets are configured by environment variable.
+deps/*
+!deps/README.md

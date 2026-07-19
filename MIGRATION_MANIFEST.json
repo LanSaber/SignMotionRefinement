@@ -1,0 +1,81 @@
+{
+  "created_on": "2026-07-19",
+  "mode": "additive_copy_and_refactor",
+  "source_root": "/media/cvpr/haomian/SOKE",
+  "destination_root": "/media/cvpr/haomian/SignMotionRefinement",
+  "source_modified": false,
+  "artifacts_preserved_byte_for_byte": true,
+  "verification": {
+    "method": "rsync -rcn --delete per artifact directory",
+    "status": "passed",
+    "checked_directories": 25,
+    "missing_files": 0,
+    "extra_files_inside_copied_directories": 0,
+    "changed_files": 0,
+    "checkpoint_state_dicts_strict_loaded": 14,
+    "focused_tests_passed": 16,
+    "standalone_modules_imported": 19,
+    "python_files_compiled": 40,
+    "archived_inference_smoke_test": "passed",
+    "alpha_zero_max_abs_from_slerp": 1.1920928955078125e-7,
+    "alpha_one_observed_frames_exact": true
+  },
+  "experiments": {
+    "source": "experiments/NIAF/continuous_sign_field",
+    "destination": "artifacts/experiments",
+    "directory_count": 13,
+    "file_count": 78,
+    "byte_count": 306712077,
+    "directories": [
+      "guava_mask_aware_meta_c2_fk_jerk_finetune",
+      "guava_mask_aware_meta_c2_fk_jerk_guava_self_finetune",
+      "guava_mask_aware_meta_c2_fk_jerk_guava_self_finetune_weight050",
+      "guava_mask_aware_meta_c2_fk_jerk_guava_self_smoke",
+      "guava_mask_aware_meta_finetune",
+      "guava_self_only_meta_c2_fk_jerk",
+      "guava_self_only_meta_c2_fk_jerk_headwarmup",
+      "guava_self_only_meta_c2_fk_jerk_smoke",
+      "guava_self_only_meta_c2_fk_jerk_stable_smoke",
+      "guava_self_only_meta_c2_fk_jerk_stable_so3",
+      "guava_self_only_meta_c2_fk_jerk_stable_so3_trunk5e5",
+      "smpl_samples_meta_implicit_gt_anchor_stride8_fk_temporal",
+      "smpl_samples_meta_implicit_soft_recon_stride8_fk_smooth"
+    ]
+  },
+  "visualizations": {
+    "source": "visualize/NIAF/continuous_sign_field",
+    "destination": "artifacts/visualizations",
+    "directory_count": 12,
+    "file_count": 671,
+    "byte_count": 496253530,
+    "directories": [
+      "guava_bounded_meta_pilot",
+      "guava_completion_compare",
+      "guava_completion_jerk",
+      "guava_completion_jerk_visualized12",
+      "guava_linear_siren_jerk_compare",
+      "guava_linear_siren_jerk_pilot1000",
+      "guava_linear_siren_jerk_pilot_mse",
+      "guava_linear_siren_jerk_smoke",
+      "guava_mask_aware_meta_c2_fk_jerk_guava_self_pilot",
+      "guava_mask_aware_meta_c2_fk_jerk_pilot",
+      "guava_mask_aware_meta_pilot",
+      "guava_self_only_meta_c2_fk_jerk_soke_free_diagnostic_pilot"
+    ]
+  },
+  "photorealistic_guava_integration": {
+    "source": "/media/cvpr/haomian/GUAVA/tools",
+    "destination": "integrations/guava",
+    "scripts": [
+      "render_guava_compact_motion.py",
+      "compose_guava_motion_comparison.py"
+    ],
+    "external_runtime_required": "/media/cvpr/haomian/GUAVA"
+  },
+  "external_dependencies_not_copied": [
+    "/media/cvpr/haomian/data",
+    "/media/cvpr/haomian/SOKE/deps/smpl_models",
+    "/media/cvpr/haomian/SOKE/deps/flan-t5-base",
+    "/media/cvpr/haomian/GUAVA"
+  ]
+}

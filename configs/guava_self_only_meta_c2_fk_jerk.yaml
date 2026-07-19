@@ -1,0 +1,164 @@
+experiment_name: guava_self_only_meta_c2_fk_jerk
+seed: 20260717
+device: auto
+
+data:
+  completion_root: /media/cvpr/haomian/data/SOKE_FLOW/how2sign_soke_upper_smplx_GUAVA/guava_completed_flow
+  source_split: train
+  pilot_fits_dir: ${PROJECT_ROOT}/artifacts/visualizations/guava_bounded_meta_pilot/fits
+  cache_dir: /media/cvpr/haomian/data/SOKE_FLOW/how2sign_soke_upper_smplx_GUAVA/guava_self_only_cache_c2_v1
+  blank_text_cache: ${PROJECT_ROOT}/assets/blank_text_tokens.npz
+  validation_group_fraction: 0.20
+  max_gap_condition: 256
+  gap_envelope_power: 3.0
+  in_memory: true
+
+# Hidden features are transferred, but the pose-output head is reset exactly
+# to zero before optimization. The initial deployed behavior is pure SLERP.
+parent_checkpoint: ${PROJECT_ROOT}/artifacts/experiments/guava_mask_aware_meta_c2_fk_jerk_finetune/checkpoints/best.pt
+
+text:
+  model_path: ${SMR_FLAN_T5_DIR:-/media/cvpr/haomian/SOKE/deps/flan-t5-base}
+  device: cpu
+  max_tokens: 16
+  local_files_only: true
+  cache: true
+
+model:
+  type: meta_implicit_residual_field
+  code_dim: 128
+  context_hidden_dim: 256
+  hidden_dim: 256
+  depth: 4
+  time_fourier_bands: 10
+  omega0_first: 20.0
+  omega0_hidden: 1.0
+  residual_scale_init: 0.1
+  residual_scale_learnable: true
+  dropout: 0.0
+  condition_dim: 4
+
+# Bounds are calibrated only from synthetic SLERP-to-retained-GUAVA residuals
+# on training groups. No dense SOKE pose enters this calibration.
+bounds:
+  percentile: 95.0
+  calibration_views_per_sequence: 4
+  calibration_step_offset: 50000
+  body_max_degrees: 30.0
+  hands_max_degrees: 45.0
+  jaw_max_degrees: 8.0
+  expression_max: 1.0
+
+# Kept only as a shared hand-weight fallback for the reusable loss routine.
+# There are no real-gap SOKE pose, FK, velocity, or acceleration targets.
+loss:
+  hand_weight: 2.0
+
+self_supervision:
+  enabled: true
+  validate: true
+  weight: 1.0
+  seed_offset: 17001
+  spans_per_sequence: 2
+  max_mask_fraction: 0.50
+
+  # Weights approximate the fraction of real missing frames in each bucket:
+  # 28.2%, 41.7%, 15.6%, and 14.5%, respectively.
+  gap_length_buckets:
+    - name: 1_2
+      min: 1
+      max: 2
+      weight: 0.28
+    - name: 3_7
+      min: 3
+      max: 7
+      weight: 0.42
+    - name: 8_16
+      min: 8
+      max: 16
+      weight: 0.16
+    - name: 17_plus
+      min: 17
+      max: 73
+      weight: 0.14
+
+  # Multiple fixed views provide enough validation coverage for long gaps.
+  validation_steps: [101, 211, 307, 401]
+
+  loss:
+    hand_weight: 2.0
+    lambda_rot6d: 1.0
+    lambda_geodesic: 0.10
+    lambda_expression: 0.25
+    lambda_fk_mpjpe: 10.0
+    lambda_correction: 0.02
+
+    # No derivative target matching. These are zero-centered prediction and
+    # boundary-correction regularizers in FK space.
+    lambda_fk_velocity: 0.0
+    lambda_fk_acceleration: 0.0
+    lambda_fk_jerk_reg: 0.30
+    lambda_fk_boundary_velocity: 0.10
+    lambda_fk_boundary_acceleration: 0.05
+    fk_temporal_hand_weight: 2.0
+    fk_velocity_scale_mps: 1.0
+    fk_acceleration_scale_mps2: 25.0
+    fk_jerk_scale_mps3: 1000.0
+    fk_jerk_deadzone_mps3: 100.0
+    fk_temporal_charbonnier_epsilon: 0.001
+
+# Genuine gaps have no pose target. This branch only discourages unnecessary
+# residual motion and high-frequency/boundary artifacts.
+real_gap_safety:
+  enabled: true
+  weight: 0.25
+  hand_weight: 2.0
+  lambda_correction: 0.02
+  lambda_geodesic_correction: 0.05
+  lambda_expression_correction: 0.02
+  lambda_fk_velocity: 0.0
+  lambda_fk_acceleration: 0.0
+  lambda_fk_jerk_reg: 0.30
+  lambda_fk_boundary_velocity: 0.10
+  lambda_fk_boundary_acceleration: 0.05
+  fk_temporal_hand_weight: 2.0
+  fk_velocity_scale_mps: 1.0
+  fk_acceleration_scale_mps2: 25.0
+  fk_jerk_scale_mps3: 1000.0
+  fk_jerk_deadzone_mps3: 100.0
+  fk_temporal_charbonnier_epsilon: 0.001
+
+train:
+  epochs: 20
+  batch_size: 2
+  num_workers: 0
+  lr: 0.00005
+  # The output head is intentionally reset to zero. It therefore learns at
+  # the standard meta-field rate while transferred layers fine-tune slowly.
+  residual_head_lr: 0.0002
+  weight_decay: 0.0001
+  grad_clip: 1.0
+  freeze_text_projection: true
+  # The strict deployment gate can keep alpha=0 for many epochs even while a
+  # candidate is improving, so complete the short 20-epoch schedule.
+  early_stop_patience: 0
+  max_train_batches: 0
+
+eval:
+  alpha_grid: [0.0, 0.10, 0.25, 0.50, 0.75, 1.0]
+  fk_batch_size: 128
+  selection_mode: masked_guava_safe_fallback
+  min_masked_guava_mpjpe_improvement_percent: 1.0
+  mpjpe_tolerance_from_best_percent: 2.0
+  max_masked_guava_jerk_increase_percent: 25.0
+  max_real_gap_jerk_increase_percent: 25.0
+  max_bucket_mpjpe_increase_percent: 5.0
+  max_real_gap_correction_geodesic_degrees: 10.0
+
+metrics:
+  model_dir: ${SMR_SMPLX_MODEL_DIR:-/media/cvpr/haomian/SOKE/deps/smpl_models}
+  gender: NEUTRAL
+  betas_mode: h2s_fixed
+
+output:
+  out_dir: ${PROJECT_ROOT}/artifacts/experiments/guava_self_only_meta_c2_fk_jerk_stable_so3_trunk5e5

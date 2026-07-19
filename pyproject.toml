@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sign-motion-refinement"
+version = "0.1.0"
+description = "Mask-aware GUAVA SMPL-X missing-frame completion and motion refinement"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+dependencies = [
+  "imageio>=2.31",
+  "imageio-ffmpeg>=0.4.9",
+  "matplotlib>=3.7",
+  "numpy>=1.24",
+  "Pillow>=9.5",
+  "PyYAML>=6.0",
+  "scipy>=1.10",
+  "smplx==0.1.28",
+  "torch>=2.0",
+  "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+text = ["transformers>=4.35"]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+smr-complete-guava = "sign_motion_refinement.cli.complete:main"
+smr-evaluate-jerk = "sign_motion_refinement.cli.evaluate_jerk:main"
+smr-evaluate-meta = "sign_motion_refinement.cli.evaluate_meta:main"
+smr-run-bounded-pilot = "sign_motion_refinement.cli.run_bounded_pilot:main"
+smr-train-mask-aware = "sign_motion_refinement.cli.train_mask_aware:main"
+smr-train-guava-only = "sign_motion_refinement.cli.train_guava_only:main"
+smr-visualize-completion = "sign_motion_refinement.visualization.completion_compare:main"
+smr-visualize-linear-siren = "sign_motion_refinement.visualization.linear_siren_jerk:main"
+smr-visualize-meta-jerk = "sign_motion_refinement.visualization.meta_jerk:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
